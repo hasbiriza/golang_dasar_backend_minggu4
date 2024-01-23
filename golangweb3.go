@@ -12,6 +12,12 @@ type product struct {
 	Stock int
 }
 
+var products = []product{
+	{Name: "Baju", Price: 70000, Stock: 12},
+	{Name: "Celana", Price: 50000, Stock: 20},
+	{Name: "Topi", Price: 30000, Stock: 15},
+}
+
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Hello World, Ini lagi coba Air Golang , mantap")
@@ -19,11 +25,7 @@ func main() {
 
 	http.HandleFunc("/products", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
-			products := []product{ 
-				{Name: "Baju", Price: 70000, Stock: 12},
-				{Name: "Celana", Price: 50000, Stock: 20},
-				{Name: "Topi", Price: 30000, Stock: 15},
-			}
+
 			res, err := json.Marshal(products)
 			if err != nil {
 				http.Error(w, "Gagal Konversi JSON", http.StatusInternalServerError)
