@@ -5,12 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 )
 
 func Data_products(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		res, err := json.Marshal(models.Products)
+		res, err := json.Marshal(models.SelectAll())
 		if err != nil {
 			http.Error(w, "Gagal Konversi Json", http.StatusInternalServerError)
 			return
@@ -26,12 +25,17 @@ func Data_products(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "Gagal Decode")
 			return
 		}
-		if product.Id <= 0 || product.Name == "" || product.Price <= 0 || product.Stock <= 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Invalid product data- Isi Produk dengan Nilai yang benar")
-			return
+		// if product.Id <= 0 || product.Name == "" || product.Price <= 0 || product.Stock <= 0 {
+		// 	w.WriteHeader(http.StatusBadRequest)
+		// 	fmt.Fprintf(w, "Invalid product data- Isi Produk dengan Nilai yang benar")
+		// 	return
+		// }
+		item := models.Product{
+			Name:  product.Name,
+			Price: product.Price,
+			Stock: product.Stock,
 		}
-		models.Products = append(models.Products, product)
+		models.Post(&item)
 		w.WriteHeader(http.StatusCreated)
 		msg := map[string]string{
 			"Message": "Product Created",
@@ -48,26 +52,26 @@ func Data_products(w http.ResponseWriter, r *http.Request) {
 }
 
 func Data_product(w http.ResponseWriter, r *http.Request) {
-	idParam := r.URL.Path[len("/product/"):]
-	id, err := strconv.Atoi(idParam)
-	if err != nil {
-		http.Error(w, "ID Not Found", http.StatusNotFound)
-		return
-	}
-	var foundIndex = -1
-	for i, p := range models.Products {
-		if p.Id == id {
-			foundIndex = i
-			break
-		}
-	}
-	if foundIndex == -1 {
-		http.Error(w, "Id not Found", http.StatusNotFound)
-		return
-	}
+	id := r.URL.Path[len("/product/"):]
+	// id, err := strconv.Atoi(idParam)
+	// if err != nil {
+	// 	http.Error(w, "ID Not Found", http.StatusNotFound)
+	// 	return
+	// }
+	// var foundIndex = -1
+	// for i, p := range models.Products {
+	// 	if p.Id == id {
+	// 		foundIndex = i
+	// 		break
+	// 	}
+	// }
+	// if foundIndex == -1 {
+	// 	http.Error(w, "Id not Found", http.StatusNotFound)
+	// 	return
+	// }
 
 	if r.Method == "GET" {
-		res, err := json.Marshal(models.Products[foundIndex])
+		res, err := json.Marshal(models.Select(id))
 		if err != nil {
 			http.Error(w, "Gagal Konversi Json", http.StatusInternalServerError)
 		}
@@ -82,12 +86,17 @@ func Data_product(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "Gagal Decode boss")
 			return
 		}
-		if updateProduct.Id <= 0 || updateProduct.Name == "" || updateProduct.Price <= 0 || updateProduct.Stock <= 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Invalid product data")
-			return
+		// if updateProduct.Id <= 0 || updateProduct.Name == "" || updateProduct.Price <= 0 || updateProduct.Stock <= 0 {
+		// 	w.WriteHeader(http.StatusBadRequest)
+		// 	fmt.Fprintf(w, "Invalid product data")
+		// 	return
+		// }
+		newProduct := models.Product{
+			Name:  updateProduct.Name,
+			Price: updateProduct.Price,
+			Stock: updateProduct.Stock,
 		}
-		models.Products[foundIndex] = updateProduct
+		models.Updates(id, &newProduct)
 		msg := map[string]string{
 			"Message": "Product Updated",
 		}
@@ -98,7 +107,8 @@ func Data_product(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write(res)
 	} else if r.Method == "DELETE" {
-		_ = append(models.Products[:foundIndex], models.Products[foundIndex+1:]...)
+		models.Deletes(id)
+		// _ = append(models.Products[:foundIndex], models.Products[foundIndex+1:]...)
 		msg := map[string]string{
 			"Message": "Product Deleted",
 		}
